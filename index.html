@@ -15,7 +15,7 @@
 <body>
   <h1>Electricity Usage Tracker</h1>
   <form id="usageForm">
-    <label for="amount">Electricity amount (kWh or Rands):</label>
+    <label for="amount">Electricity amount (Rands):</label>
     <input type="number" step="0.01" id="amount" required>
 
     <label for="location">Location (optional):</label>
@@ -24,6 +24,15 @@
     <label for="date">Date of purchase (optional):</label>
     <input type="date" id="date">
 
+    <label for="isVodacom">Are you a Vodacom customer?</label>
+    <select id="isVodacom">
+      <option value="true">Yes</option>
+      <option value="false" selected>No</option>
+    </select>
+
+    <label for="airtime">Airtime expenditure per week (Rands):</label>
+    <input type="number" step="0.01" id="airtime" placeholder="e.g., 100">
+
     <button type="submit">Submit</button>
   </form>
   <div id="status"></div>
@@ -31,12 +40,10 @@
   <script>
   document.addEventListener('DOMContentLoaded', function() {
     console.log('✅ DOM loaded');
-
-    // ⚠️ REPLACE THESE WITH YOUR ACTUAL VALUES
-    const SUPABASE_URL = 'https://rsrobbcemqukyybquqfm.supabase.co'; // your project URL
-    const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_2VswKfgJhcqW7jLGdsG5fw_5KVqb0Yb'; // your publishable key
-
     // Initialize Supabase client
+    const SUPABASE_URL = 'https://rsrobbcemqukyybquqfm.supabase.co';
+    const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_2VswKfgJhcqW7jLGdsG5fw_5KVqb0Yb';
+
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
 
     const form = document.getElementById('usageForm');
@@ -52,14 +59,22 @@
       const amount = parseFloat(document.getElementById('amount').value);
       const location = document.getElementById('location').value || null;
       const date = document.getElementById('date').value || null;
+      const isVodacom = document.getElementById('isVodacom').value === 'true';
+      const airtime = parseFloat(document.getElementById('airtime').value) || null;
 
       console.log('📤 Data to send:', { amount, location, date });
 
       try {
         const { data, error } = await supabase
           .from('electricity_usage')
-          .insert([{ amount, location, purchase_date: date }]);
-
+          .insert([{ 
+            amount, 
+            location, 
+            purchase_date: date,
+            is_vodacom_customer: isVodacom,
+            airtime_weekly: airtime 
+          }]);
+          
         if (error) {
           console.error('❌ Supabase error:', error);
           status.textContent = '❌ Error: ' + error.message;

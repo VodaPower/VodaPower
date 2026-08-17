@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Electricity Usage Survey</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    body { font-family: Arial; max-width: 500px; margin: 2rem auto; padding: 1rem; }
+    label { display: block; margin: 1rem 0 0.2rem; }
+    input, button { width: 100%; padding: 0.5rem; margin-bottom: 0.5rem; }
+    button { background: #1a8c4c; color: white; border: none; cursor: pointer; }
+    #status { margin-top: 1rem; }
+  </style>
+</head>
+<body>
+  <h1>Electricity Usage Tracker</h1>
+  <form id="usageForm">
+    <label for="amount">Electricity amount (kWh or Rands):</label>
+    <input type="number" step="0.01" id="amount" required>
+
+    <label for="location">Location (optional):</label>
+    <input type="text" id="location" placeholder="e.g., Soweto">
+
+    <label for="date">Date of purchase (optional):</label>
+    <input type="date" id="date">
+
+    <button type="submit">Submit</button>
+  </form>
+  <div id="status"></div>
+
+  <script>
+  document.addEventListener('DOMContentLoaded', function() {
+    console.log('✅ DOM loaded');
+
+    // ⚠️ REPLACE THESE WITH YOUR ACTUAL VALUES
+    const SUPABASE_URL = 'https://rsrobbcemqukyybquqfm.supabase.co'; // your project URL
+    const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_2VswKfgJhcqW7jLGdsG5fw_5KVqb0Yb'; // your publishable key
+
+    // Initialize Supabase client
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+
+    const form = document.getElementById('usageForm');
+    const status = document.getElementById('status');
+
+    form.addEventListener('submit', async function(e) {
+      e.preventDefault();
+      console.log('✅ Submit prevented – sending data...');
+
+      status.textContent = 'Sending data...';
+
+      // Get form values
+      const amount = parseFloat(document.getElementById('amount').value);
+      const location = document.getElementById('location').value || null;
+      const date = document.getElementById('date').value || null;
+
+      console.log('📤 Data to send:', { amount, location, date });
+
+      try {
+        const { data, error } = await supabase
+          .from('electricity_usage')
+          .insert([{ amount, location, purchase_date: date }]);
+
+        if (error) {
+          console.error('❌ Supabase error:', error);
+          status.textContent = '❌ Error: ' + error.message;
+          status.style.color = 'red';
+        } else {
+          console.log('✅ Success! Data:', data);
+          status.textContent = '✅ Data saved successfully!';
+          status.style.color = 'green';
+          form.reset();
+        }
+      } catch (err) {
+        console.error('❌ Unexpected error:', err);
+        status.textContent = '❌ Error: ' + err.message;
+        status.style.color = 'red';
+      }
+    });
+  });
+</script>
+</body>
+</html>

@@ -1,97 +1,905 @@
-<!DOCTYPE html>
-<html>
+<!doctype html>
+<html lang="en">
+
 <head>
-  <meta charset="UTF-8">
-  <title>Electricity Usage Survey</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <style>
-    body { font-family: Arial; max-width: 500px; margin: 2rem auto; padding: 1rem; }
-    label { display: block; margin: 1rem 0 0.2rem; }
-    input, button { width: 100%; padding: 0.5rem; margin-bottom: 0.5rem; }
-    button { background: #1a8c4c; color: white; border: none; cursor: pointer; }
-    #status { margin-top: 1rem; }
-  </style>
-</head>
-<body>
-  <h1>Electricity Usage Tracker</h1>
-  <form id="usageForm">
-    <label for="amount">Electricity amount (Rands):</label>
-    <input type="number" step="0.01" id="amount" required>
-
-    <label for="location">Location (optional):</label>
-    <input type="text" id="location" placeholder="e.g., Soweto">
-
-    <label for="date">Date of purchase (optional):</label>
-    <input type="date" id="date">
-
-    <label for="isVodacom">Are you a Vodacom customer?</label>
-    <select id="isVodacom">
-      <option value="true">Yes</option>
-      <option value="false" selected>No</option>
-    </select>
-
-    <label for="airtime">Airtime expenditure per week (Rands):</label>
-    <input type="number" step="0.01" id="airtime" placeholder="e.g., 100">
-
-    <button type="submit">Submit</button>
-  </form>
-  <div id="status"></div>
-
-  <script>
-  document.addEventListener('DOMContentLoaded', function() {
-    console.log('✅ DOM loaded');
-    // Initialize Supabase client
-    const SUPABASE_URL = 'https://rsrobbcemqukyybquqfm.supabase.co';
-    const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_2VswKfgJhcqW7jLGdsG5fw_5KVqb0Yb';
-
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
-
-    const form = document.getElementById('usageForm');
-    const status = document.getElementById('status');
-
-    form.addEventListener('submit', async function(e) {
-      e.preventDefault();
-      console.log('✅ Submit prevented – sending data...');
-
-      status.textContent = 'Sending data...';
-
-      // Get form values
-      const amount = parseFloat(document.getElementById('amount').value);
-      const location = document.getElementById('location').value || null;
-      const date = document.getElementById('date').value || null;
-      const isVodacom = document.getElementById('isVodacom').value === 'true';
-      const airtime = parseFloat(document.getElementById('airtime').value) || null;
-
-      console.log('📤 Data to send:', { amount, location, date });
-
-      try {
-        const { data, error } = await supabase
-          .from('electricity_usage')
-          .insert([{ 
-            amount, 
-            location, 
-            purchase_date: date,
-            is_vodacom_customer: isVodacom,
-            airtime_weekly: airtime 
-          }]);
-          
-        if (error) {
-          console.error('❌ Supabase error:', error);
-          status.textContent = '❌ Error: ' + error.message;
-          status.style.color = 'red';
-        } else {
-          console.log('✅ Success! Data:', data);
-          status.textContent = '✅ Data saved successfully!';
-          status.style.color = 'green';
-          form.reset();
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="description" content="VodaPower community energy platform prototype">
+    <title>VodaPower · Powering better choices</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root {
+            --ink: #12233f;
+            --muted: #66758c;
+            --blue: #075ee8;
+            --cyan: #17c4d8;
+            --lime: #d7f35c;
+            --cream: #f7f9fc;
+            --line: #dce5f0
         }
-      } catch (err) {
-        console.error('❌ Unexpected error:', err);
-        status.textContent = '❌ Error: ' + err.message;
-        status.style.color = 'red';
-      }
-    });
-  });
-</script>
+
+        * {
+            box-sizing: border-box
+        }
+
+        body {
+            margin: 0;
+            background: var(--cream);
+            color: var(--ink);
+            font-family: Inter, system-ui, -apple-system, sans-serif
+        }
+
+        button,
+        input,
+        select,
+        textarea {
+            font: inherit
+        }
+
+        button {
+            cursor: pointer
+        }
+
+        .top {
+            background: var(--ink);
+            color: #fff;
+            padding: 9px 5vw;
+            display: flex;
+            justify-content: space-between;
+            font-size: .75rem;
+            letter-spacing: .08em
+        }
+
+        header {
+            background: #fff;
+            border-bottom: 1px solid var(--line);
+            padding: 16px 5vw;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 2
+        }
+
+        .brand {
+            font-weight: 900;
+            font-size: 1.25rem;
+            letter-spacing: -.04em;
+            display: flex;
+            align-items: center;
+            gap: 10px
+        }
+
+        .mark {
+            width: 32px;
+            height: 32px;
+            border-radius: 10px 10px 10px 3px;
+            background: linear-gradient(135deg, var(--cyan), var(--blue));
+            display: inline-block;
+            transform: rotate(-12deg)
+        }
+
+        nav {
+            display: flex;
+            gap: 6px
+        }
+
+        nav button {
+            border: 0;
+            background: transparent;
+            color: var(--muted);
+            padding: 10px 13px;
+            border-radius: 10px;
+            font-weight: 700
+        }
+
+        nav button.active,
+        nav button:hover {
+            background: #edf4ff;
+            color: var(--blue)
+        }
+
+        .view {
+            display: none
+        }
+
+        .view.active {
+            display: block
+        }
+
+        .hero {
+            max-width: 1200px;
+            margin: auto;
+            padding: 70px 5vw 56px;
+            display: grid;
+            grid-template-columns: 1.15fr .85fr;
+            gap: 50px;
+            align-items: center
+        }
+
+        .eyebrow {
+            text-transform: uppercase;
+            letter-spacing: .15em;
+            font-size: .7rem;
+            font-weight: 900;
+            color: var(--blue)
+        }
+
+        h1 {
+            font-size: clamp(2.6rem, 6vw, 5.3rem);
+            line-height: .95;
+            letter-spacing: -.08em;
+            margin: 18px 0 22px
+        }
+
+        h1 span {
+            color: var(--blue)
+        }
+
+        .lead {
+            color: var(--muted);
+            font-size: 1.1rem;
+            line-height: 1.6;
+            max-width: 620px
+        }
+
+        .actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin: 28px 0 12px
+        }
+
+        .primary,
+        .secondary {
+            border: 0;
+            border-radius: 12px;
+            padding: 14px 18px;
+            font-weight: 800
+        }
+
+        .primary {
+            background: var(--blue);
+            color: #fff
+        }
+
+        .secondary {
+            background: #e8f7f7;
+            color: #087483;
+            display: inline-block;
+            text-decoration: none
+        }
+
+        .note {
+            font-size: .78rem;
+            color: var(--muted)
+        }
+
+        .art {
+            min-height: 320px;
+            border-radius: 28px;
+            background: linear-gradient(145deg, var(--blue), var(--cyan));
+            padding: 28px;
+            position: relative;
+            overflow: hidden
+        }
+
+        .art:before {
+            content: "";
+            position: absolute;
+            width: 240px;
+            height: 240px;
+            border: 38px solid #ffffff20;
+            border-radius: 50%;
+            right: -65px;
+            top: -35px
+        }
+
+        .art-card {
+            background: #fff;
+            border-radius: 18px;
+            padding: 20px;
+            position: absolute;
+            box-shadow: 0 15px 35px #00327a30
+        }
+
+        .one {
+            left: 25px;
+            right: 50px;
+            top: 40px
+        }
+
+        .two {
+            right: 20px;
+            bottom: 25px;
+            width: 180px;
+            background: var(--lime)
+        }
+
+        .small {
+            font-size: .75rem;
+            color: var(--muted)
+        }
+
+        .big {
+            font-size: 2.5rem;
+            font-weight: 900;
+            letter-spacing: -.08em;
+            margin: 5px 0
+        }
+
+        .bar {
+            height: 9px;
+            background: #dce8f5;
+            border-radius: 10px
+        }
+
+        .bar i {
+            display: block;
+            width: 72%;
+            height: 100%;
+            background: var(--cyan);
+            border-radius: 10px
+        }
+
+        .section {
+            max-width: 1200px;
+            margin: auto;
+            padding: 35px 5vw 70px
+        }
+
+        .section-head {
+            display: flex;
+            justify-content: space-between;
+            gap: 20px;
+            align-items: end;
+            margin-bottom: 22px
+        }
+
+        .section-head p {
+            max-width: 520px;
+            color: var(--muted);
+            line-height: 1.5
+        }
+
+        h2 {
+            font-size: clamp(1.8rem, 3vw, 2.7rem);
+            letter-spacing: -.06em;
+            margin: 0
+        }
+
+        .grid,
+        .dash {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px
+        }
+
+        .dash {
+            grid-template-columns: 1.1fr .9fr
+        }
+
+        .card,
+        .panel {
+            background: #fff;
+            border: 1px solid var(--line);
+            border-radius: 18px;
+            padding: 24px
+        }
+
+        .panel {
+            box-shadow: 0 16px 45px #17345d12
+        }
+
+        .icon {
+            width: 42px;
+            height: 42px;
+            background: #e8f7f7;
+            border-radius: 12px;
+            display: grid;
+            place-items: center;
+            font-size: 1.2rem
+        }
+
+        h3 {
+            margin: 16px 0 8px
+        }
+
+        .card p,
+        .panel p {
+            color: var(--muted);
+            line-height: 1.5;
+            font-size: .92rem
+        }
+
+        .field {
+            margin: 12px 0
+        }
+
+        label {
+            display: block;
+            color: var(--muted);
+            font-size: .8rem;
+            font-weight: 700;
+            margin-bottom: 6px
+        }
+
+        input,
+        select,
+        textarea {
+            width: 100%;
+            padding: 11px 12px;
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            color: var(--ink);
+            background: #fff
+        }
+
+        textarea {
+            min-height: 90px
+        }
+
+        .status {
+            min-height: 20px;
+            margin-top: 12px;
+            color: #147b4a;
+            font-size: .85rem
+        }
+
+        .top,
+        .lead,
+        .note,
+        .section-head > p,
+        .card p,
+        .panel > p,
+        .alert,
+        .art,
+        footer {
+            display: none
+        }
+
+        .hero {
+            grid-template-columns: 1fr
+        }
+
+        .dash {
+            grid-template-columns: 1fr
+        }
+
+        .dash > .panel:nth-child(2) {
+            display: none
+        }
+
+        .status.success {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 9px 13px;
+            border-radius: 999px;
+            background: #eaf8ed;
+            animation: pop-in .35s ease-out;
+        }
+
+        .status.success::before {
+            content: '✓';
+            display: grid;
+            place-items: center;
+            width: 19px;
+            height: 19px;
+            border-radius: 50%;
+            background: #168041;
+            color: #fff;
+            font-size: .75rem;
+            font-weight: 800;
+        }
+
+        .weather-card p {
+            display: block;
+            min-height: 48px;
+        }
+
+        @keyframes pop-in {
+            from { opacity: 0; transform: translateY(5px) scale(.96) }
+            to { opacity: 1; transform: translateY(0) scale(1) }
+        }
+
+        .skills-card {
+            grid-column: 1 / -1;
+            min-height: 280px;
+            background: linear-gradient(180deg, #ffffff22, #12233fcc), url('assets/techstart-skills.tiff') center / cover;
+            border: 0;
+            display: flex;
+            align-items: end;
+            padding: 0;
+            overflow: hidden;
+        }
+
+        .skills-card a {
+            width: 100%;
+            border-radius: 0;
+            background: #e60000;
+            color: #fff;
+            text-align: center;
+        }
+
+        .alert {
+            border-left: 4px solid #f2ac32;
+            background: #fff8e9;
+            border-radius: 10px;
+            padding: 13px;
+            color: #76500d;
+            font-size: .88rem;
+            line-height: 1.45;
+            margin-top: 16px
+        }
+
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            align-items: end;
+            margin: 18px 0
+        }
+
+        .metric strong {
+            font-size: 2rem;
+            letter-spacing: -.07em
+        }
+
+        .tag {
+            background: #eaf8ed;
+            color: #168041;
+            border-radius: 50px;
+            padding: 5px 9px;
+            font-size: .7rem;
+            font-weight: 800
+        }
+
+        .team-hero {
+            background: var(--ink);
+            color: #fff
+        }
+
+        .team-hero .lead {
+            color: #c9d5e7
+        }
+
+        .team-hero .eyebrow {
+            color: var(--lime)
+        }
+
+        .team-hero h1 span {
+            color: var(--lime)
+        }
+
+        .team-hero .art {
+            background: linear-gradient(145deg, #1c2f53, var(--blue))
+        }
+
+        .team-hero .two {
+            color: var(--ink)
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: .88rem
+        }
+
+        td {
+            padding: 14px 0;
+            border-bottom: 1px solid var(--line)
+        }
+
+        td:last-child {
+            text-align: right;
+            font-weight: 800
+        }
+
+        .open {
+            color: #087483
+        }
+
+        .progress {
+            color: #c57900
+        }
+
+        footer {
+            padding: 25px 5vw;
+            border-top: 1px solid var(--line);
+            color: var(--muted);
+            font-size: .78rem;
+            display: flex;
+            justify-content: space-between
+        }
+
+        @media(max-width:750px) {
+            .top {
+                display: block;
+                text-align: center
+            }
+
+            .top span:last-child {
+                display: none
+            }
+
+            header {
+                padding: 13px 4vw
+            }
+
+            nav button {
+                font-size: .72rem;
+                padding: 9px 7px
+            }
+
+            .hero {
+                grid-template-columns: 1fr;
+                padding: 44px 4vw 35px;
+                gap: 30px
+            }
+
+            .art {
+                min-height: 280px
+            }
+
+            .section {
+                padding: 28px 4vw 55px
+            }
+
+            .section-head {
+                display: block
+            }
+
+            .grid,
+            .dash {
+                grid-template-columns: 1fr
+            }
+
+            .section-head p {
+                margin-top: 10px
+            }
+
+            footer {
+                display: block
+            }
+
+            footer span {
+                display: block;
+                margin-top: 8px
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="top"><span>VODAPOWER COMMUNITY ENERGY PLATFORM</span><span>Prototype · 16 October 2026</span></div>
+    <header>
+        <div class="brand"><i class="mark"></i>VodaPower</div>
+        <nav><button class="nav active" data-view="customer">For households</button><button class="nav"
+                data-view="team">For maintenance teams</button></nav>
+    </header>
+    <main>
+        <section id="customer" class="view active">
+            <div class="hero">
+                <div>
+                    <div class="eyebrow">Better energy habits, together</div>
+                    <h1>Make every unit of power <span>count.</span></h1>
+                    <p class="lead">A simple community tool for tracking energy use, preparing for severe weather, and
+                        building more resilient local power systems.</p>
+                    <div class="actions"><button class="primary" data-scroll="tools">See my energy
+                            snapshot</button><button class="secondary" data-scroll="weather">Check weather
+                            readiness</button></div>
+                    <div class="note">A prototype using manual entries — no smart-meter access is assumed.</div>
+                </div>
+                <div class="art">
+                    <div class="art-card one">
+                        <div class="small">This month’s energy snapshot</div>
+                        <div class="big"><span id="energy-total">0</span> <small>units</small></div>
+                        <div class="bar"><i></i></div>
+                        <div class="small" id="energy-trend">Waiting for readings</div>
+                    </div>
+                    <div class="art-card two">
+                        <div class="small">Community impact</div><strong>Small steps<br>add up.</strong>
+                    </div>
+                </div>
+            </div>
+            <div class="section" id="tools">
+                <div class="section-head">
+                    <div>
+                        <div class="eyebrow">Your energy companion</div>
+                        <h2>A clearer view of your home energy</h2>
+                    </div>
+                    <p>Use your latest electricity slip or meter reading to create a personal baseline. This demo keeps
+                        data in the browser.</p>
+                </div>
+                <div class="dash">
+                    <div class="panel">
+                        <h3>Log a reading</h3>
+                        <p class="note">Enter what you know. Update it when you have a new reading.</p>
+                        <form id="usage">
+                            <div class="field"><label for="reading">Latest reading or purchase amount</label><input
+                                    id="reading" type="number" min="0" placeholder="e.g. 450" required></div>
+                            <div class="field"><label for="date">Date</label><input id="date" type="date" required>
+                            </div><button class="primary">Save snapshot</button>
+                            <div class="status" id="usage-status"></div>
+                        </form>
+                    </div>
+                    <div class="panel">
+                        <h3>What your snapshot can do</h3>
+                        <div class="metric"><span class="note">Recorded trend</span><strong id="energy-trend-card">—</strong></div><span
+                            class="tag">Good direction</span>
+                        <div class="alert">Compare similar weeks and look for changes after switching off standby
+                            appliances. This is guidance, not a live Eskom reading.</div>
+                        <p class="note">Future versions could connect approved meter or mini-grid data sources.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="section" id="weather">
+                <div class="section-head">
+                    <div>
+                        <div class="eyebrow">Stay ready</div>
+                        <h2>Weather warnings, made useful</h2>
+                    </div>
+                    <p>See what to prepare for before a storm or heatwave affects your local power network.</p>
+                </div>
+                <div class="grid">
+                    <div class="card weather-card">
+                        <div class="icon">⛈</div>
+                        <h3 id="weather-alert-title">Severe storm watch</h3>
+                        <p id="weather-alert-copy">Keep phones charged, secure outdoor equipment, and report damaged infrastructure from a safe
+                            place.</p>
+                    </div>
+                    <div class="card weather-card">
+                        <div class="icon">☀</div>
+                        <h3 id="weather-conditions-title">Heatwave checklist</h3>
+                        <p id="weather-conditions-copy">Save energy during peak heat, check on neighbours, and keep essential devices powered.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <section id="team" class="view team-hero">
+            <div class="hero">
+                <div>
+                    <div class="eyebrow">For the people keeping communities powered</div>
+                    <h1>Turn faults into <span>forward motion.</span></h1>
+                    <p class="lead">A shared workspace concept for maintenance teams to capture faults, communicate
+                        progress, and grow mini-grid skills.</p>
+                    <div class="actions"><button class="primary" data-scroll="report">Report a fault</button><button
+                            class="secondary" data-scroll="skills">Open skills hub</button></div>
+                    <div class="note" style="color:#c9d5e7">Demo workflow only — it does not dispatch a real technician.
+                    </div>
+                </div>
+                <div class="art">
+                    <div class="art-card one">
+                        <div class="small">Open community reports</div>
+                        <div class="big" id="open-report-count">0</div>
+                        <div class="bar"><i style="width:55%;background:#f2ac32"></i></div>
+                        <div class="small">2 high priority · 2 being reviewed</div>
+                    </div>
+                    <div class="art-card two">
+                        <div class="small">Team focus</div><strong>Safe, fast,<br>traceable.</strong>
+                    </div>
+                </div>
+            </div>
+            <div class="section" id="report">
+                <div class="section-head">
+                    <div>
+                        <div class="eyebrow">Maintenance desk</div>
+                        <h2>See the work. Own the next action.</h2>
+                    </div>
+                    <p>Reports are structured so a team can understand the issue, set a priority, and close the loop.
+                    </p>
+                </div>
+                <div class="dash">
+                    <div class="panel">
+                        <h3>Report an infrastructure fault</h3>
+                        <form id="fault">
+                            <div class="field"><label for="type">Issue type</label><select id="type">
+                                    <option>Power interruption</option>
+                                    <option>Damaged line or pole</option>
+                                    <option>Mini-grid battery issue</option>
+                                    <option>Streetlight fault</option>
+                                </select></div>
+                            <div class="field"><label for="area">Area or landmark</label><input id="area"
+                                    placeholder="e.g. Community hall, Ward 4" required></div>
+                            <div class="field"><label for="detail">What happened?</label><textarea id="detail"
+                                    placeholder="Add useful context for the team" required></textarea></div><button
+                                class="primary">Submit report</button>
+                            <div class="status" id="fault-status"></div>
+                        </form>
+                    </div>
+                    <div class="panel">
+                        <h3>Current queue</h3>
+                        <table>
+                            <tr>
+                                <td data-report-cell="0">Loading reports...</td>
+                                <td class="progress" data-report-status="0"></td>
+                            </tr>
+                            <tr>
+                                <td data-report-cell="1"></td>
+                                <td class="open" data-report-status="1"></td>
+                            </tr>
+                            <tr>
+                                <td data-report-cell="2"></td>
+                                <td class="open" data-report-status="2"></td>
+                            </tr>
+                        </table>
+                        <p class="note">Sample queue for presentation purposes.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="section" id="skills">
+                <div class="section-head">
+                    <div>
+                        <div class="eyebrow">Skills hub</div>
+                        <h2>Build the confidence behind the infrastructure</h2>
+                    </div>
+                    <p>Practical learning paths for digital readiness, field safety, and local energy systems.</p>
+                </div>
+                <div class="grid">
+                    <a class="card skills-card" href="https://vodacom.com/skills-hub.php" target="_blank"
+                        rel="noopener noreferrer" aria-label="Open Vodacom Skills Hub">
+                        <span class="secondary">Open Vodacom Skills Hub</span>
+                    </a>
+                </div>
+            </div>
+        </section>
+    </main>
+    <script>
+        const supabaseClient = window.supabase.createClient(
+            'https://rsrobbcemqukyybquqfm.supabase.co',
+            'sb_publishable_2VswKfgJhcqW7jLGdsG5fw_5KVqb0Yb'
+        );
+
+        const setView = view => {
+            document.querySelectorAll('.view').forEach(item => item.classList.toggle('active', item.id === view));
+            document.querySelectorAll('.nav').forEach(item => item.classList.toggle('active', item.dataset.view === view));
+            scrollTo({ top: 0, behavior: 'smooth' });
+        };
+
+        document.querySelectorAll('[data-view]').forEach(button => {
+            button.onclick = () => setView(button.dataset.view);
+        });
+
+        document.querySelectorAll('[data-scroll]').forEach(button => {
+            button.onclick = () => document.getElementById(button.dataset.scroll).scrollIntoView({ behavior: 'smooth' });
+        });
+
+        const showStatus = (elementId, message, isError = false) => {
+            const element = document.getElementById(elementId);
+            element.textContent = message;
+            element.style.color = isError ? '#b42318' : '#147b4a';
+            element.classList.toggle('success', !isError);
+        };
+
+        const loadEnergySummary = async () => {
+            const { data, error } = await supabaseClient
+                .from('electricity_usage')
+                .select('amount, purchase_date')
+                .order('purchase_date', { ascending: false });
+            if (error) {
+                document.getElementById('energy-trend').textContent = 'Unable to load readings';
+                return;
+            }
+            const today = new Date();
+            const currentMonth = today.getMonth();
+            const currentYear = today.getFullYear();
+            const previousMonthDate = new Date(currentYear, currentMonth - 1, 1);
+            const currentTotal = data.filter(row => {
+                const date = new Date(`${row.purchase_date}T00:00:00`);
+                return date.getMonth() === currentMonth && date.getFullYear() === currentYear;
+            }).reduce((total, row) => total + Number(row.amount || 0), 0);
+            const previousTotal = data.filter(row => {
+                const date = new Date(`${row.purchase_date}T00:00:00`);
+                return date.getMonth() === previousMonthDate.getMonth() && date.getFullYear() === previousMonthDate.getFullYear();
+            }).reduce((total, row) => total + Number(row.amount || 0), 0);
+            const trend = previousTotal ? Math.round(((currentTotal - previousTotal) / previousTotal) * 100) : null;
+            document.getElementById('energy-total').textContent = currentTotal.toFixed(0);
+            document.getElementById('energy-trend').textContent = trend === null ? 'No previous month to compare' : `${trend <= 0 ? 'Trending' : 'Up'} ${Math.abs(trend)}% compared with last month`;
+            document.getElementById('energy-trend-card').textContent = trend === null ? '—' : `${trend <= 0 ? '↓' : '↑'} ${Math.abs(trend)}%`;
+        };
+
+        const loadMaintenanceQueue = async () => {
+            const { data, error } = await supabaseClient
+                .from('maintenance_reports')
+                .select('issue_type, area, status, created_at')
+                .order('created_at', { ascending: false });
+            if (error) {
+                document.getElementById('open-report-count').textContent = '—';
+                document.querySelector('[data-report-cell="0"]').textContent = 'Unable to load reports';
+                return;
+            }
+            document.getElementById('open-report-count').textContent = data.filter(report => report.status !== 'Resolved').length;
+            data.forEach((report, index) => {
+                const cell = document.querySelector(`[data-report-cell="${index}"]`);
+                const status = document.querySelector(`[data-report-status="${index}"]`);
+                if (cell) cell.innerHTML = `${report.issue_type} · ${report.area}<br><span class="small">${new Date(report.created_at).toLocaleDateString()}</span>`;
+                if (status) status.textContent = report.status;
+            });
+        };
+
+        loadEnergySummary();
+        loadMaintenanceQueue();
+
+        const loadWeather = async () => {
+            try {
+                const response = await fetch('https://api.open-meteo.com/v1/forecast?latitude=-26.2041&longitude=28.0473&current=temperature_2m,weather_code&timezone=auto');
+                if (!response.ok) throw new Error(`Open-Meteo returned ${response.status}`);
+                const weather = await response.json();
+                const weatherLabels = {
+                    0: 'Clear sky', 1: 'Mainly clear', 2: 'Partly cloudy', 3: 'Overcast',
+                    45: 'Foggy', 48: 'Foggy', 51: 'Light drizzle', 53: 'Drizzle', 55: 'Heavy drizzle',
+                    61: 'Light rain', 63: 'Rain', 65: 'Heavy rain', 71: 'Light snow', 73: 'Snow',
+                    75: 'Heavy snow', 80: 'Rain showers', 81: 'Rain showers', 82: 'Heavy rain showers',
+                    95: 'Thunderstorm', 96: 'Thunderstorm with hail', 99: 'Thunderstorm with hail'
+                };
+                const weatherCode = weather.current?.weather_code ?? -1;
+                const condition = weatherLabels[weatherCode] ?? 'Weather update';
+                const temperature = Math.round(weather.current?.temperature_2m ?? 0);
+                const severeWeather = [65, 82, 95, 96, 99].includes(weatherCode);
+                document.getElementById('weather-alert-title').textContent = severeWeather ? 'Severe weather watch' : 'Weather readiness';
+                document.getElementById('weather-alert-copy').textContent = severeWeather ? 'Rain or storm conditions are currently reported. Keep phones charged and report damaged infrastructure from a safe place.' : 'No severe weather condition is currently indicated. Keep phones charged and stay prepared for local changes.';
+                document.getElementById('weather-conditions-title').textContent = `${condition} · ${temperature}°C`;
+                document.getElementById('weather-conditions-copy').textContent = 'Live conditions loaded for Johannesburg. Save energy during peak heat and keep essential devices powered.';
+                return;
+            } catch (error) {
+                document.getElementById('weather-alert-title').textContent = 'Weather unavailable';
+                document.getElementById('weather-alert-copy').textContent = 'The live weather service is not connected yet.';
+                document.getElementById('weather-conditions-title').textContent = 'Try again later';
+                document.getElementById('weather-conditions-copy').textContent = error.message;
+            }
+        };
+
+        loadWeather();
+
+        document.getElementById('usage').onsubmit = async event => {
+            event.preventDefault();
+            const form = event.currentTarget;
+            const submitButton = form.querySelector('button');
+            submitButton.disabled = true;
+            submitButton.textContent = 'Saving...';
+
+            const { error } = await supabaseClient.from('electricity_usage').insert({
+                amount: Number(document.getElementById('reading').value),
+                purchase_date: document.getElementById('date').value
+            });
+
+            if (error) {
+                showStatus('usage-status', `Could not save reading: ${error.message}`, true);
+            } else {
+                showStatus('usage-status', 'Reading added successfully.');
+                form.reset();
+                loadEnergySummary();
+            }
+            submitButton.disabled = false;
+            submitButton.textContent = 'Save snapshot';
+        };
+
+        document.getElementById('fault').onsubmit = async event => {
+            event.preventDefault();
+            const form = event.currentTarget;
+            const submitButton = form.querySelector('button');
+            submitButton.disabled = true;
+            submitButton.textContent = 'Saving...';
+
+            const { error } = await supabaseClient.from('maintenance_reports').insert({
+                issue_type: document.getElementById('type').value,
+                area: document.getElementById('area').value,
+                details: document.getElementById('detail').value,
+                status: 'Open'
+            });
+
+            if (error) {
+                showStatus('fault-status', `Could not save report: ${error.message}`, true);
+            } else {
+                showStatus('fault-status', 'Fault report added successfully.');
+                form.reset();
+                loadMaintenanceQueue();
+            }
+            submitButton.disabled = false;
+            submitButton.textContent = 'Submit report';
+        };
+    </script>
 </body>
+
 </html>

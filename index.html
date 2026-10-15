@@ -94,6 +94,20 @@
             font-weight: 700
         }
 
+        nav .nav-link {
+            display: inline-block;
+            color: var(--muted);
+            padding: 10px 13px;
+            border-radius: 10px;
+            font-weight: 700;
+            text-decoration: none
+        }
+
+        nav .nav-link:hover {
+            background: #edf4ff;
+            color: var(--blue)
+        }
+
         nav button.active,
         nav button:hover {
             background: #edf4ff;
@@ -423,6 +437,34 @@
             text-align: center;
         }
 
+        .vodapay-tile {
+            display: flex;
+            min-height: 150px;
+            align-items: end;
+            background: linear-gradient(135deg, #e60000, #9f0010);
+            color: #fff;
+            border: 0;
+            text-decoration: none;
+        }
+
+        .vodapay-tile h3 {
+            margin: 0;
+            color: #fff
+        }
+
+        .rewards-panel {
+            display: none;
+            margin-top: 16px;
+        }
+
+        .rewards-panel.open {
+            display: block;
+        }
+
+        .rewards-panel h3 {
+            margin-top: 0
+        }
+
         .alert {
             border-left: 4px solid #f2ac32;
             background: #fff8e9;
@@ -575,8 +617,9 @@
     <div class="top"><span>VODAPOWER COMMUNITY ENERGY PLATFORM</span><span>Prototype · 16 October 2026</span></div>
     <header>
         <div class="brand"><i class="mark"></i>VodaPower</div>
-        <nav><button class="nav active" data-view="customer">For households</button><button class="nav"
-                data-view="team">For maintenance teams</button></nav>
+            <nav><button class="nav active" data-view="customer">For households</button><button class="nav"
+                    data-view="team">For maintenance teams</button><a class="nav-link"
+                    href="https://vodacom.com/skills-hub.php" target="_blank" rel="noopener noreferrer">Skills Hub</a></nav>
     </header>
     <main>
         <section id="customer" class="view active">
@@ -656,6 +699,25 @@
                     </div>
                 </div>
             </div>
+            <div class="section">
+                <div class="grid">
+                    <div class="card vodapay-tile">
+                        <h3>Rewards</h3>
+                        <button class="secondary" id="rewards-link-button" type="button">Link VodaPay account</button>
+                    </div>
+                </div>
+                <div class="panel rewards-panel" id="rewards-panel">
+                    <h3>Link your VodaPay account</h3>
+                    <form id="rewards-form">
+                        <div class="field">
+                            <label for="vodapay-number">VodaPay number</label>
+                            <input id="vodapay-number" type="tel" placeholder="e.g. 082 123 4567" required>
+                        </div>
+                        <button class="primary" type="submit">Continue to VodaPay</button>
+                        <div class="status" id="rewards-status"></div>
+                    </form>
+                </div>
+            </div>
         </section>
         <section id="team" class="view team-hero">
             <div class="hero">
@@ -664,8 +726,7 @@
                     <h1>Turn faults into <span>forward motion.</span></h1>
                     <p class="lead">A shared workspace concept for maintenance teams to capture faults, communicate
                         progress, and grow mini-grid skills.</p>
-                    <div class="actions"><button class="primary" data-scroll="report">Report a fault</button><button
-                            class="secondary" data-scroll="skills">Open skills hub</button></div>
+                    <div class="actions"><button class="primary" data-scroll="report">Report a fault</button></div>
                     <div class="note" style="color:#c9d5e7">Demo workflow only — it does not dispatch a real technician.
                     </div>
                 </div>
@@ -728,21 +789,6 @@
                     </div>
                 </div>
             </div>
-            <div class="section" id="skills">
-                <div class="section-head">
-                    <div>
-                        <div class="eyebrow">Skills hub</div>
-                        <h2>Build the confidence behind the infrastructure</h2>
-                    </div>
-                    <p>Practical learning paths for digital readiness, field safety, and local energy systems.</p>
-                </div>
-                <div class="grid">
-                    <a class="card skills-card" href="https://vodacom.com/skills-hub.php" target="_blank"
-                        rel="noopener noreferrer" aria-label="Open Vodacom Skills Hub">
-                        <span class="secondary">Open Vodacom Skills Hub</span>
-                    </a>
-                </div>
-            </div>
         </section>
     </main>
     <script>
@@ -764,6 +810,18 @@
         document.querySelectorAll('[data-scroll]').forEach(button => {
             button.onclick = () => document.getElementById(button.dataset.scroll).scrollIntoView({ behavior: 'smooth' });
         });
+
+        document.getElementById('rewards-link-button').onclick = () => {
+            document.getElementById('rewards-panel').classList.toggle('open');
+        };
+
+        document.getElementById('rewards-form').onsubmit = event => {
+            event.preventDefault();
+            const number = document.getElementById('vodapay-number').value.trim();
+            if (!number) return;
+            showStatus('rewards-status', 'Continue in VodaPay to link your account.');
+            window.open('https://vodapay.vodacom.co.za/vodapay/personal/home', '_blank', 'noopener,noreferrer');
+        };
 
         const showStatus = (elementId, message, isError = false) => {
             const element = document.getElementById(elementId);

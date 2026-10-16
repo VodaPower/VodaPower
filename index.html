@@ -5,6 +5,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="description" content="VodaPower community energy platform prototype">
+    <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
     <title>VodaPower · Powering better choices</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
@@ -51,7 +52,7 @@
         }
 
         header {
-            background: #fff;
+            background: #f7f7f7;
             border-bottom: 1px solid var(--line);
             padding: 16px 5vw;
             display: flex;
@@ -78,6 +79,14 @@
             background: linear-gradient(135deg, var(--cyan), var(--blue));
             display: inline-block;
             transform: rotate(-12deg)
+        }
+
+        .brand-logo {
+            width: 205px;
+            height: 72px;
+            display: block;
+            object-fit: contain;
+            object-position: center
         }
 
         nav {
@@ -619,7 +628,8 @@
 <body>
     <div class="top"><span>VODAPOWER COMMUNITY ENERGY PLATFORM</span><span>Prototype · 16 October 2026</span></div>
     <header>
-        <div class="brand"><i class="mark"></i>VodaPower</div>
+        <div class="brand"><img class="brand-logo" src="assets/blue-energy-foundation-logo.png"
+                alt="Blue Energy Foundation"></div>
             <nav><button class="nav active" data-view="customer">For households</button><button class="nav"
                     data-view="team">For maintenance teams</button><a class="nav-link"
                     href="https://vodacom.com/skills-hub.php" target="_blank" rel="noopener noreferrer">Skills Hub</a></nav>

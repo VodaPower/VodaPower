@@ -1,29 +1,24 @@
 # VodaPower
 
-VodaPower is a GitHub Pages prototype for the Blue Team / VodaStart presentation.
+VodaPower is a responsive community energy platform for the Blue Team / VodaStart project.
 
-- **Households:** manual energy snapshots, honest smart-meter limitations, weather readiness, and sustainability habits.
-- **Maintenance teams:** fault reporting, a sample work queue, and a skills hub for Vodacom TechStart and mini-grid operations.
-- **Weather:** live conditions and alerts through a Supabase Edge Function, keeping the weather provider key off GitHub Pages.
+## Features
 
-## Prototype boundaries
+- **Households:** save electricity readings to Supabase and view a live monthly trend.
+- **Weather:** load current Johannesburg conditions from Open-Meteo.
+- **Rewards:** open VodaPay so a household can continue linking its account or number.
+- **Skills Hub:** link directly to Vodacom’s official Skills Hub.
+- **Maintenance teams:** submit infrastructure fault reports and view the live report queue.
 
-The customer reading form saves to the existing `electricity_usage` table in Supabase. The maintenance form saves to a `maintenance_reports` table. The app does not claim access to Eskom smart meters, live weather feeds, technician dispatch, zero-rating, or operational Vodabucks rewards.
+## Data and prototype boundaries
 
-## Deploy live weather
+Customer readings are saved to `electricity_usage` in Supabase. Fault reports are saved to `maintenance_reports`. The VodaPay tile opens Vodacom’s official site; VodaPower does not process or store VodaPay account details.
 
-The weather cards call `supabase/functions/weather/index.ts`. This function uses Open-Meteo, which is free for this prototype and does not require an API key.
+The app does not claim direct Eskom smart-meter access, technician dispatch, zero-rating, or operational Vodabucks rewards. Weather data is current Open-Meteo information for the configured location, not an official emergency-alert feed.
 
-```bash
-supabase login
-supabase link --project-ref rsrobbcemqukyybquqfm
-supabase secrets set WEATHER_LATITUDE=-26.2041 WEATHER_LONGITUDE=28.0473
-supabase functions deploy weather
-```
+## Supabase setup
 
-The example coordinates are Johannesburg. Replace them with the presentation location before deploying. Open-Meteo provides current conditions; severe-weather wording in this prototype is based on the returned weather code, not an official emergency alert feed.
-
-If `maintenance_reports` does not exist yet, run this in the Supabase SQL Editor:
+If `maintenance_reports` does not exist, run this in the Supabase SQL Editor:
 
 ```sql
 create table public.maintenance_reports (
@@ -32,31 +27,47 @@ create table public.maintenance_reports (
   area text not null,
   details text not null,
   status text not null default 'Open',
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  resolved_at timestamptz
 );
 
+alter table public.electricity_usage enable row level security;
 alter table public.maintenance_reports enable row level security;
 
-create policy "Allow prototype reports"
-on public.maintenance_reports
-for insert
-to anon
-with check (true);
+create policy "Allow prototype energy submissions"
+on public.electricity_usage for insert to anon with check (true);
 
--- The prototype also reads energy totals and the maintenance queue.
+create policy "Allow prototype reports"
+on public.maintenance_reports for insert to anon with check (true);
+
 create policy "Allow prototype energy reads"
-on public.electricity_usage
-for select
-to anon
-using (true);
+on public.electricity_usage for select to anon using (true);
 
 create policy "Allow prototype report reads"
-on public.maintenance_reports
-for select
-to anon
-using (true);
+on public.maintenance_reports for select to anon using (true);
 ```
+
+## Weather Edge Function
+
+The project includes `supabase/functions/weather/index.ts` as a server-side Open-Meteo option. Deploy it with:
+
+```bash
+supabase login
+supabase link --project-ref rsrobbcemqukyybquqfm
+supabase secrets set WEATHER_LATITUDE=-26.2041 WEATHER_LONGITUDE=28.0473
+supabase functions deploy weather
+```
+
+The current browser prototype calls Open-Meteo directly because it does not require an API key. Replace the coordinates in `index.html` if the weather location should change from Johannesburg.
 
 ## Run locally
 
-Open `index.html` in a browser or serve the folder with any static web server. It is ready to publish through GitHub Pages from the repository root.
+From the project folder:
+
+```bash
+python3 -m http.server 8000
+```
+
+If port `8000` is busy, use another port such as `8001`. Then open `http://localhost:8000` or the selected port.
+
+The project is ready for GitHub Pages deployment from the repository root.
